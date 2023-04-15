@@ -182,7 +182,7 @@ couponsRouter.get("/listarCupones/:id_user", (req, res) =>
         data: {
           IdCupons: 3,
           CodCupon: "CUPONFIESTA123",
-          IdUsuario: 1,
+          IdUsuario: 368,
           Fecha_Inicio: "2023-04-15T01:52:44.000Z",
           Fecha_Fin: "2023-04-15T10:00:00.000Z",
           Cantidad_Cupon: 3,
