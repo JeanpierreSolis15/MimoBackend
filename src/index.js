@@ -14,11 +14,11 @@ app.set("views", path.join(__dirname, "../public/views"));
 
 // middlewares running ------------------------------------
 const dbOptions = {
-  host: "localhost",
+  host: "geekcorporation.xyz",
   // port:'3306',
-  user: "root",
-  password: "",
-  database: "mimo",
+  user: "geekcorp_usermimo",
+  password: "xx]CC3Goc2f[",
+  database: "geekcorp_mimo",
 };
 
 app.use(myconn(mysql, dbOptions, "single"));

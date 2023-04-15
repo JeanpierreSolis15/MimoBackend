@@ -21,6 +21,28 @@ function getCampañas(req, callback) {
   });
 }
 
+// En un módulo aparte
+function getCuponesByUser(req, callback) {
+  req.getConnection((err, conn) => {
+    if (err) {
+      return callback(err);
+    } else {
+      console.log(req.params.id_user);
+      conn.query(
+        "SELECT * FROM `coupons` WHERE IdUsuario = ? AND NOW() BETWEEN Fecha_Inicio AND Fecha_Fin",
+        [req.params.id_user],
+        (err, rows) => {
+          if (err) {
+            return callback(err);
+          } else {
+            callback(null, rows);
+          }
+        }
+      );
+    }
+  });
+}
+
 couponsRouter.post("/crearCupon/", (req, res) =>
   req.getConnection((err, conn) => {
     if (err) {
@@ -46,20 +68,30 @@ couponsRouter.post("/crearCupon/", (req, res) =>
 
               // Validar si el usuario ya tiene el máximo de cupones permitidos
               if (count >= campaign.PersonasMaximas) {
-                res.send({ "status": "Ya tienes el máximo de cupones permitidos para esta campaña" });
-
-                console.log(
-                  "Ya tienes el máximo de cupones permitidos para esta campaña"
-                );
+                res
+                  .status(400)
+                  .json({
+                    success: false,
+                    data: null,
+                    message:
+                      "Ya tienes el máximo de cupones permitidos para esta campaña",
+                  });
                 return;
               }
 
               // Validar si quedan cupones disponibles para la campaña
               if (campaign.cantidadCupones <= 0) {
-                res.send({ "status": "Ya no quedan cupones disponibles para esta campaña" });
                 console.log(
                   "Ya no quedan cupones disponibles para esta campaña"
                 );
+                res
+                  .status(400)
+                  .json({
+                    success: false,
+                    data: null,
+                    message:
+                      "Ya no quedan cupones disponibles para esta campaña",
+                  });
                 return;
               }
 
@@ -70,7 +102,9 @@ couponsRouter.post("/crearCupon/", (req, res) =>
               ) {
                 // Calcular la fecha final del cupón
                 const fechaFin = new Date(fechaActual);
-                fechaFin.setDate(fechaActual.getDate() + campaign.diasVencimiento);
+                fechaFin.setDate(
+                  fechaActual.getDate() + campaign.diasVencimiento
+                );
 
                 // Realizar el update para restar uno a PersonasMaximas
                 const queryUpdate = `UPDATE campaigns SET PersonasMaximas = PersonasMaximas - 1 WHERE IdCampaign = ${campaign.IdCampaign}`;
@@ -79,8 +113,14 @@ couponsRouter.post("/crearCupon/", (req, res) =>
 
                   // Verificar si se actualizó correctamente el valor de PersonasMaximas
                   if (result.affectedRows !== 1) {
-                    res.send({ "status": "No se pudo actualizar el valor de PersonasMaximas" });
-
+                    res
+                      .status(400)
+                      .json({
+                        success: false,
+                        data: null,
+                        message:
+                          "No se pudo actualizar el valor de PersonasMaximas",
+                      });
                     console.log(
                       "No se pudo actualizar el valor de PersonasMaximas"
                     );
@@ -93,23 +133,45 @@ couponsRouter.post("/crearCupon/", (req, res) =>
                   }, '${fechaActual.toISOString().slice(0, 10)}', '${fechaFin
                     .toISOString()
                     .slice(0, 10)}', ${campaign.cantidadCupones}, 0, 1)`;
-                    conn.query(queryInsert, (err, result) => {
+                  conn.query(queryInsert, (err, result) => {
                     if (err) throw err;
 
                     // Verificar si se insertó correctamente el cupón
                     if (result.affectedRows !== 1) {
-                      res.send({ "status": "No se pudo insertar el cupón" });
+                      // res.send({ "status": "No se pudo insertar el cupón" });
+                      res
+                        .status(400)
+                        .json({
+                          success: false,
+                          data: null,
+                          message: "No se pudo insertar el cupón",
+                        });
 
                       console.log("No se pudo insertar el cupón");
                       return;
                     }
-                    res.send({ "status": "Cupón creado correctamente" });
+                    // res.send({ "status": "Cupón creado correctamente" });
+                    res
+                      .status(200)
+                      .json({
+                        success: true,
+                        data: { user },
+                        message: "Cupón creado correctamente",
+                      });
 
                     console.log("Cupón creado correctamente");
                   });
                 });
               } else {
-                res.send({ "status": "La fecha actual no está dentro del rango de la campaña" });
+                // res.send({ "status": "La fecha actual no está dentro del rango de la campaña" });
+                res
+                  .status(400)
+                  .json({
+                    success: false,
+                    data: null,
+                    message:
+                      "La fecha actual no está dentro del rango de la campaña",
+                  });
 
                 console.log(
                   "La fecha actual no está dentro del rango de la campaña"
@@ -117,6 +179,25 @@ couponsRouter.post("/crearCupon/", (req, res) =>
               }
             });
           }
+        }
+      });
+    }
+  })
+);
+
+couponsRouter.get("/listarCupones/:id_user", (req, res) =>
+  req.getConnection((err, conn) => {
+    if (err) {
+      return res.send(err);
+    } else {
+      getCuponesByUser(req, (err, rows) => {
+        if (err) {
+          console.error(err);
+          res.status(500).json({ error: "Error al obtener los cupones" });
+        } else {
+          res
+            .status(200)
+            .json({ success: true, data: rows, message: "Lista de cupones" });
         }
       });
     }
