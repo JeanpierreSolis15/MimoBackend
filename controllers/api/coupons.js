@@ -179,7 +179,7 @@ couponsRouter.get("/listarCupones/:id_user", (req, res) =>
     } else {
       res.status(200).json({
         success: true,
-        data: {
+        data: [{
           IdCupons: 3,
           CodCupon: "CUPONFIESTA123",
           IdUsuario: 368,
@@ -189,7 +189,7 @@ couponsRouter.get("/listarCupones/:id_user", (req, res) =>
           Cantidad_Uso: 0,
           Cantidad_Descuento: 5.0,
           Estado: 1,
-        },
+        }],
         message: "Lista de cupones",
       });
       // getCuponesByUser(req, (err, rows) => {
