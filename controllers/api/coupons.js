@@ -179,11 +179,11 @@ couponsRouter.post("/consumirCupon/", (req, res) =>
     } else {
       const code = req.body.code;
       const id_user = parseInt(req.body.id_user);
-      const today = new Date().toISOString().split('T')[0];
+      const dateFormatted = req.body.dateFormatted;
 
       const query = `SELECT * FROM coupons 
                      WHERE CodCupon = '${code}' 
-                     AND '${today}' BETWEEN Fecha_Inicio AND Fecha_Fin`;
+                     AND '${dateFormatted}' BETWEEN Fecha_Inicio AND Fecha_Fin`;
 
       conn.query(query, (err, result) => {
         if (err) {
