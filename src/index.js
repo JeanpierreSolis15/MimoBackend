@@ -13,21 +13,21 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "../public/views"));
 
 // middlewares running ------------------------------------
-// const dbOptions = {
-//   host: "geekcorporation.xyz",
-//   // port:'3306',
-//   user: "geekcorp_usermimo",
-//   password: "xx]CC3Goc2f[",
-//   database: "geekcorp_mimo",
-// };
-
 const dbOptions = {
-  host: "localhost",
+  host: "geekcorporation.xyz",
   // port:'3306',
-  user: "root",
-  password: "",
-  database: "mimo",
+  user: "geekcorp_usermimo",
+  password: "xx]CC3Goc2f[",
+  database: "geekcorp_mimo",
 };
+
+// const dbOptions = {
+//   host: "localhost",
+//   // port:'3306',
+//   user: "root",
+//   password: "",
+//   database: "mimo",
+// };
 
 app.use(myconn(mysql, dbOptions, "single"));
 app.use(express.json());
