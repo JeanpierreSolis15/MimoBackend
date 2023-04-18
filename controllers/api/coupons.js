@@ -172,6 +172,54 @@ couponsRouter.post("/crearCupon/", (req, res) =>
   })
 );
 
+couponsRouter.post("/consumirCupon/", (req, res) =>
+  req.getConnection((err, conn) => {
+    if (err) {
+      return res.send(err);
+    } else {
+      const code = req.body.code;
+      const id_user = req.body.id_user;
+      const today = new Date().toISOString().split('T')[0];
+
+      const query = `SELECT * FROM coupons 
+                     WHERE CodCupon = '${code}' 
+                     AND '${today}' BETWEEN Fecha_Inicio AND Fecha_Fin`;
+
+      conn.query(query, (err, result) => {
+        if (err) {
+          return res.send(err);
+        }
+
+        if (result.length === 0) {
+          return res.status(400).send({ message: 'No se encontraron cupones disponibles' });
+        }
+
+        const cupon = result[0];
+
+        if (cupon.Cantidad_Cupon <= 0) {
+          return res.status(400).send({ message: 'Los cupones se vencieron' });
+        }
+
+        if (cupon.IdUsuario === id_user) {
+          return res.status(400).send({ message: 'El usuario que creó el cupón no puede usar el mismo cupón' });
+        }
+
+        const queryUpdate = `UPDATE coupons 
+                              SET Cantidad_Cupon = ${cupon.Cantidad_Cupon - 1} 
+                              WHERE IdCupons = ${cupon.IdCupons}`;
+
+        conn.query(queryUpdate, (err, resultUpdate) => {
+          if (err) {
+            return res.send(err);
+          }
+
+          return res.send({ message: 'Cupon consumido exitosamente' });
+        });
+      });
+    }
+  })
+);
+
 couponsRouter.get("/listarCupones/:id_user", (req, res) =>
   req.getConnection((err, conn) => {
     if (err) {
@@ -179,17 +227,19 @@ couponsRouter.get("/listarCupones/:id_user", (req, res) =>
     } else {
       res.status(200).json({
         success: true,
-        data: [{
-          IdCupons: 3,
-          CodCupon: "CUPONFIESTA123",
-          IdUsuario: 368,
-          Fecha_Inicio: "2023-04-15T01:52:44.000Z",
-          Fecha_Fin: "2023-04-15T10:00:00.000Z",
-          Cantidad_Cupon: 3,
-          Cantidad_Uso: 0,
-          Cantidad_Descuento: 5.0,
-          Estado: 1,
-        }],
+        data: [
+          {
+            IdCupons: 3,
+            CodCupon: "CUPONFIESTA123",
+            IdUsuario: 368,
+            Fecha_Inicio: "2023-04-15T01:52:44.000Z",
+            Fecha_Fin: "2023-04-15T10:00:00.000Z",
+            Cantidad_Cupon: 3,
+            Cantidad_Uso: 0,
+            Cantidad_Descuento: 5.0,
+            Estado: 1,
+          },
+        ],
         message: "Lista de cupones",
       });
       // getCuponesByUser(req, (err, rows) => {
