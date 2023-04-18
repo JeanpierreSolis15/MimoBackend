@@ -178,7 +178,7 @@ couponsRouter.post("/consumirCupon/", (req, res) =>
       return res.send(err);
     } else {
       const code = req.body.code;
-      const id_user = req.body.id_user;
+      const id_user = parseInt(req.body.id_user);
       const today = new Date().toISOString().split('T')[0];
 
       const query = `SELECT * FROM coupons 
