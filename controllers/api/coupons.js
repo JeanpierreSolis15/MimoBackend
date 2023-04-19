@@ -180,28 +180,35 @@ couponsRouter.post("/consumirCupon/", (req, res) =>
       const code = req.body.code;
       const id_user = parseInt(req.body.id_user);
       const dateFormatted = req.body.dateFormatted;
-
+      console.log(code, id_user, dateFormatted);
       const query = `SELECT * FROM coupons 
                      WHERE CodCupon = '${code}' 
                      AND '${dateFormatted}' BETWEEN Fecha_Inicio AND Fecha_Fin`;
-
+      console.log(query);
       conn.query(query, (err, result) => {
         if (err) {
           return res.send(err);
         }
 
         if (result.length === 0) {
-          return res.status(400).send({ message: 'No se encontraron cupones disponibles' });
+          return res
+            .status(400)
+            .send({ message: "No se encontraron cupones disponibles" });
         }
 
         const cupon = result[0];
 
         if (cupon.Cantidad_Cupon <= 0) {
-          return res.status(400).send({ message: 'Los cupones se vencieron' });
+          return res.status(400).send({ message: "Los cupones se vencieron" });
         }
 
         if (cupon.IdUsuario === id_user) {
-          return res.status(400).send({ message: 'El usuario que creó el cupón no puede usar el mismo cupón' });
+          return res
+            .status(400)
+            .send({
+              message:
+                "El usuario que creó el cupón no puede usar el mismo cupón",
+            });
         }
 
         const queryUpdate = `UPDATE coupons 
@@ -213,7 +220,7 @@ couponsRouter.post("/consumirCupon/", (req, res) =>
             return res.send(err);
           }
 
-          return res.send({ message: 'Cupon consumido exitosamente' });
+          return res.send({ message: "Cupon consumido exitosamente" });
         });
       });
     }
