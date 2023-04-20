@@ -220,7 +220,7 @@ couponsRouter.post("/consumirCupon/", (req, res) =>
             return res.send(err);
           }
 
-          return res.send({ message: "Cupon consumido exitosamente" });
+          return res.send({ message: "Cupon consumido exitosamente", "data":query });
         });
       });
     }
