@@ -1,0 +1,15 @@
+Deseo hacer una seccion de cupones, pero estas cupones tienen un modelo de flujo
+Los administradores pueden crear campañasa esas campañas se le crean cupones, esa campaña tiene una fecha de inicio y fin tiene una 
+cantidad maxima de creacion de cupones por campaña y cantidad de veces a la que un usuario se le puede crear como maximo por campaña,
+como por ejemplo "campaña dia de las madres desde el dia 29 de mayo del 2020 hasta el 20 de agosto del 2020 
+con un limite de 10 cupones creados para dicha campaña y un limite de 2 veces a la que un usuario puede crearse un cupon con su id,  
+dicha campaña se le pueden agregar cupones, los usuarios pueden crear un cupon 
+asociado a la campaña y a su id del usuario que creo el cupon, pero esos usuarios no pueden utilizarlos, los que pueden usar los cupones a las personas que los comparten,
+mas el mismo usuario no puede de usar dicho cupon.
+
+necesito de eso crear 3 apis en node js con mysql
+Crear campañas con nombre de campañas, fechas inicio y fin, limite de cupones a crear por campaña, limite de veces a la que usuario se le puede crear cupones con su id 
+Crear cupones con Codigo del cupon aleatoriamente y id de la persona con la que se creo dicho cupon, cantidad del descuento del cupon,
+tambien debe de de validar cuando crea el cupon si en caso esta en el rango de fechas de la campaña es porque a esa camapaña debe de asosiarce 
+Api para consumir el cupones por cliente (recordar que el cliente que lo creo no lo puede usar, lo puede usar otras personas) y tambien recordar que si se puede usar el cupon, 
+debe de restar 1 cupon al limite de cupones de la campaña y tambien restar el limite de uso por cliente
