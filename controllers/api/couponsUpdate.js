@@ -255,19 +255,20 @@ couponsUpdateRouter.get('/coupons/:user_id', (req, res) => {
   req.getConnection((err, connection) => {
     const { user_id } = req.params;
     const getCouponsQuery = `
-        SELECT c.* FROM coupons c
+        SELECT c.*, ca.discount, ca.max_coupons_per_user_per_campaign
+        FROM coupons c
         INNER JOIN campaigns ca ON c.campaign_id = ca.id
-        WHERE c.user_id = ${user_id}
+        WHERE c.creator_user_id =  ${user_id}
         AND c.used = 0
         AND ca.start_date <= NOW()
-        AND ca.end_date >= NOW()
+        AND ca.end_date >= NOW();
     `;
     connection.query(getCouponsQuery, (err, results) => {
         if (err) {
             console.error(err);
             return res.status(500).json({ error: 'An error occurred while fetching coupons' });
         }
-        return res.json(results);
+        return res.json({data:results});
     });
   });
   
