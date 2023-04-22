@@ -34,7 +34,7 @@ const dbOptions = {
   host: "mysql-psinnovationsgroup2022.alwaysdata.net",
   port:'3306',
   user: "265655",
-  password: "Dead_Gun15",
+  password: "265655_pass",
   database: "psinnovationsgroup2022_mimo",
 };
 
