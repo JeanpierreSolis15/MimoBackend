@@ -274,69 +274,6 @@ couponsUpdateRouter.get('/coupons/:user_id', (req, res) => {
   
 });
 
-// couponsUpdateRouter.get('/useCoupons/:id', (req, res) => {
-//   const { id } = req.params;
-
-//   req.getConnection((err, connection) => {
-//     if (err) throw err;
-
-//     const getCouponQuery = `
-//       SELECT * FROM coupons WHERE creator_user_id = ${id}
-//     `;
-//     connection.query(getCouponQuery, async (getCouponErr, getCouponResult) => {
-//       if (getCouponErr) throw getCouponErr;
-//       // If no coupons were found for the user, return an empty response
-//       console.log(getCouponResult)
-//       if (!getCouponResult.length) {
-//         return res.status(200).json([]);
-//       }
-
-//       const userIds = getCouponResult.map(coupon => coupon.user_id);
-//       const campaignIds = getCouponResult.map(coupon => coupon.campaign_id);
-//       const creatorIds = getCouponResult.map(coupon => coupon.creator_user_id);
-
-//       // Get user and creator data from Firebase
-//       const getFirebaseData = async (userIds, creatorIds) => {
-//         try {
-//           const db = admin.firestore();
-//           const usersRef = db.collection('client');
-//           const creatorsRef = db.collection('client');
-//           const usersSnapshot = await usersRef.where('id_cliente', 'in', userIds).get();
-//           const creatorsSnapshot = await creatorsRef.where('id_cliente', 'in', creatorIds).get();
-//           const users = {};
-//           usersSnapshot.forEach(doc => {
-//             users[doc.data().id_cliente] = doc.data();
-//           });
-//           const creators = {};
-//           creatorsSnapshot.forEach(doc => {
-//             creators[doc.data().id_cliente] = doc.data();
-//           });
-//           return { users, creators };
-//         } catch (error) {
-//           console.error(error);
-//           return null;
-//         }
-//       };
-
-//       // Wait for user and creator data to be retrieved, then construct response
-//       const { users, creators } = await getFirebaseData(userIds, creatorIds);
-//       const campaignData = await getCampaignData(connection, campaignIds);
-
-//       const responseData = getCouponResult.map((coupon, index) => {
-//         return {
-//           coupon_id: coupon.id,
-//           discount: coupon.discount,
-//           creator: creators[coupon.creator_user_id] ? creators[coupon.creator_user_id].nombres : null,
-//           user: users[coupon.user_id].nombres,
-//           campaign: campaignData.find(campaign => campaign.id === coupon.campaign_id)
-//         };
-//       });
-
-//       return res.status(200).json(responseData);
-//     });
-//   });
-// });
-
 couponsUpdateRouter.get('/useCoupons/:id', (req, res) => {
   const { id } = req.params;
 
@@ -344,31 +281,19 @@ couponsUpdateRouter.get('/useCoupons/:id', (req, res) => {
     if (err) throw err;
 
     const getCouponQuery = `
-      SELECT c.*, ca.name as campaign_name, ca.discount as campaign_discount, ca.max_users as campaign_max_users
-      FROM coupons c
-      INNER JOIN campaigns ca ON c.campaign_id = ca.id
-      WHERE c.creator_user_id = ${id}
-      AND c.used = 0
-      AND ca.start_date <= NOW()
-      AND ca.end_date >= NOW()
-      ORDER BY c.created_at DESC
-      LIMIT 1
+    SELECT * FROM coupons WHERE creator_user_id = ${id} ORDER BY created_at DESC LIMIT 1
     `;
     connection.query(getCouponQuery, async (getCouponErr, getCouponResult) => {
       if (getCouponErr) throw getCouponErr;
-
       // If no coupons were found for the user, return an empty response
+      console.log(getCouponResult)
       if (!getCouponResult.length) {
         return res.status(200).json([]);
       }
 
-      const coupon = getCouponResult[0];
-      const campaign = {
-        id: coupon.campaign_id,
-        name: coupon.campaign_name,
-        discount: coupon.campaign_discount,
-        max_users: coupon.campaign_max_users
-      };
+      const userIds = getCouponResult.map(coupon => coupon.user_id);
+      const campaignIds = getCouponResult.map(coupon => coupon.campaign_id);
+      const creatorIds = getCouponResult.map(coupon => coupon.creator_user_id);
 
       // Get user and creator data from Firebase
       const getFirebaseData = async (userIds, creatorIds) => {
@@ -394,19 +319,24 @@ couponsUpdateRouter.get('/useCoupons/:id', (req, res) => {
       };
 
       // Wait for user and creator data to be retrieved, then construct response
-      const { users, creators } = await getFirebaseData([coupon.user_id], [coupon.creator_user_id]);
-      const responseData = {
-        coupon_id: coupon.id,
-        discount: coupon.discount,
-        creator: creators[coupon.creator_user_id] ? creators[coupon.creator_user_id].nombres : null,
-        user: users[coupon.user_id].nombres,
-        campaign
-      };
+      const { users, creators } = await getFirebaseData(userIds, creatorIds);
+      const campaignData = await getCampaignData(connection, campaignIds);
+
+      const responseData = getCouponResult.map((coupon, index) => {
+        return {
+          coupon_id: coupon.id,
+          discount: coupon.discount,
+          creator: creators[coupon.creator_user_id] ? creators[coupon.creator_user_id].nombres : null,
+          user: users[coupon.user_id].nombres,
+          campaign: campaignData.find(campaign => campaign.id === coupon.campaign_id)
+        };
+      });
 
       return res.status(200).json(responseData);
     });
   });
 });
+
 
 
 async function getCampaignData(connection, campaignIds) {
