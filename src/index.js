@@ -32,7 +32,7 @@ app.set("views", path.join(__dirname, "../public/views"));
 
 const dbOptions = {
   host: "mysql-psinnovationsgroup2022.alwaysdata.net",
-  // port:'3306',
+  port:'3306',
   user: "265655",
   password: "Dead_Gun15",
   database: "psinnovationsgroup2022_mimo",
