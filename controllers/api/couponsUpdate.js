@@ -185,7 +185,7 @@ couponsUpdateRouter.post("/coupons", (req, res) => {
                   (updateErr, updateResult) => {
                     if (updateErr) throw updateErr;
               
-                    res.status(201).json({
+                    res.status(200).json({
                       id: insertResult.insertId,
                       campaign_id: campaignId,
                       creator_user_id: userId,
