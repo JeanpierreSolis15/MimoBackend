@@ -78,7 +78,7 @@ couponsUpdateRouter.post("/coupons", (req, res) => {
       FROM campaigns
       WHERE start_date <= NOW() AND end_date >= NOW()
     `;
-
+    console.log(campaignQuery)
     connection.query(campaignQuery, (campaignErr, campaignResult) => {
       if (campaignErr) throw campaignErr;
 
@@ -108,7 +108,7 @@ couponsUpdateRouter.post("/coupons", (req, res) => {
         FROM coupons
         WHERE campaign_id = ${campaignId} AND creator_user_id = ${userId}
       `;
-
+      console.log(userCouponCountQuery)
       connection.query(
         userCouponCountQuery,
         (userCouponCountErr, userCouponCountResult) => {
@@ -131,7 +131,7 @@ couponsUpdateRouter.post("/coupons", (req, res) => {
           FROM coupons
           WHERE campaign_id = ${campaignId}
         `;
-
+        console.log(campaignCouponCountQuery)
           connection.query(
             campaignCouponCountQuery,
             (campaignCouponCountErr, campaignCouponCountResult) => {
@@ -166,7 +166,7 @@ couponsUpdateRouter.post("/coupons", (req, res) => {
                 INSERT INTO coupons (campaign_id, user_id, code, expiration_date,creator_user_id)
                 VALUES (${campaignId}, null, '${couponCode}', '${expirationDate.toISOString()}', ${userId})
               `;
-              
+              console.log(insertQuery)
               connection.query(insertQuery, (insertErr, insertResult) => {
                 if (insertErr) throw insertErr;
               
@@ -179,7 +179,7 @@ couponsUpdateRouter.post("/coupons", (req, res) => {
                   END
                   WHERE id = ${campaignId}
                 `;
-              
+                console.log(updateCampaignCountQuery)
                 connection.query(
                   updateCampaignCountQuery,
                   (updateErr, updateResult) => {
@@ -263,6 +263,7 @@ couponsUpdateRouter.get('/coupons/:user_id', (req, res) => {
         AND ca.start_date <= NOW()
         AND ca.end_date >= NOW();
     `;
+    console.log(getCouponsQuery)
     connection.query(getCouponsQuery, (err, results) => {
         if (err) {
             console.error(err);
@@ -283,6 +284,7 @@ couponsUpdateRouter.get('/useCoupons/:id', (req, res) => {
     const getCouponQuery = `
     SELECT * FROM coupons WHERE creator_user_id = ${id} ORDER BY created_at DESC LIMIT 1
     `;
+    console.log(getCouponQuery)
     connection.query(getCouponQuery, async (getCouponErr, getCouponResult) => {
       if (getCouponErr) throw getCouponErr;
       // If no coupons were found for the user, return an empty response
@@ -344,6 +346,7 @@ async function getCampaignData(connection, campaignIds) {
     const getCampaignQuery = `
       SELECT * FROM campaigns WHERE id IN (${campaignIds.join(',')})
     `;
+    console.log(getCampaignQuery)
     connection.query(getCampaignQuery, (getCampaignErr, getCampaignResult) => {
       if (getCampaignErr) {
         reject(getCampaignErr);
