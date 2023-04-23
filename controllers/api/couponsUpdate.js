@@ -3,15 +3,14 @@ const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 const randtoken = require("rand-token");
 const couponsUpdateRouter = Router();
-const admin = require('firebase-admin');
+const admin = require("firebase-admin");
 
 var serviceAccount = require("../../mimo-3ef92-firebase-adminsdk-gschq-c7e02cf8a6.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: 'https://mimo-3ef92.firebaseio.com'
+  databaseURL: "https://mimo-3ef92.firebaseio.com",
 });
-
 
 couponsUpdateRouter.post("/campaigns", (req, res) => {
   req.getConnection((err, connection) => {
@@ -22,7 +21,7 @@ couponsUpdateRouter.post("/campaigns", (req, res) => {
       max_coupons_per_campaign,
       max_coupons_per_user_per_campaign,
       discount,
-      days_to_expire
+      days_to_expire,
     } = req.body;
 
     // Insertar la nueva campaña en la base de datos
@@ -35,7 +34,7 @@ couponsUpdateRouter.post("/campaigns", (req, res) => {
         max_coupons_per_campaign,
         max_coupons_per_user_per_campaign,
         discount,
-        days_to_expire
+        days_to_expire,
       ],
       (err, result) => {
         if (err) {
@@ -78,7 +77,7 @@ couponsUpdateRouter.post("/coupons", (req, res) => {
       FROM campaigns
       WHERE start_date <= NOW() AND end_date >= NOW()
     `;
-    console.log(campaignQuery)
+    console.log(campaignQuery);
     connection.query(campaignQuery, (campaignErr, campaignResult) => {
       if (campaignErr) throw campaignErr;
 
@@ -108,7 +107,7 @@ couponsUpdateRouter.post("/coupons", (req, res) => {
         FROM coupons
         WHERE campaign_id = ${campaignId} AND creator_user_id = ${userId}
       `;
-      console.log(userCouponCountQuery)
+      console.log(userCouponCountQuery);
       connection.query(
         userCouponCountQuery,
         (userCouponCountErr, userCouponCountResult) => {
@@ -131,7 +130,7 @@ couponsUpdateRouter.post("/coupons", (req, res) => {
           FROM coupons
           WHERE campaign_id = ${campaignId}
         `;
-        console.log(campaignCouponCountQuery)
+          console.log(campaignCouponCountQuery);
           connection.query(
             campaignCouponCountQuery,
             (campaignCouponCountErr, campaignCouponCountResult) => {
@@ -146,7 +145,7 @@ couponsUpdateRouter.post("/coupons", (req, res) => {
                   .send("Campaign has reached the maximum number of coupons");
                 return;
               }
-              
+
               if (
                 campaign.total_coupons_per_campaign > 0 &&
                 campaignCouponCount >= totalCouponsPerCampaign
@@ -160,16 +159,18 @@ couponsUpdateRouter.post("/coupons", (req, res) => {
               }
               const couponCode = generateCouponCode(campaignName);
               const expirationDate = new Date();
-              expirationDate.setDate(expirationDate.getDate() + campaign.days_to_expire);
-              
+              expirationDate.setDate(
+                expirationDate.getDate() + campaign.days_to_expire
+              );
+
               const insertQuery = `
                 INSERT INTO coupons (campaign_id, user_id, code, expiration_date,creator_user_id)
                 VALUES (${campaignId}, null, '${couponCode}', '${expirationDate.toISOString()}', ${userId})
               `;
-              console.log(insertQuery)
+              console.log(insertQuery);
               connection.query(insertQuery, (insertErr, insertResult) => {
                 if (insertErr) throw insertErr;
-              
+
                 // Update the campaign's created coupons count
                 const updateCampaignCountQuery = `
                   UPDATE campaigns SET max_coupons_per_campaign = 
@@ -179,12 +180,12 @@ couponsUpdateRouter.post("/coupons", (req, res) => {
                   END
                   WHERE id = ${campaignId}
                 `;
-                console.log(updateCampaignCountQuery)
+                console.log(updateCampaignCountQuery);
                 connection.query(
                   updateCampaignCountQuery,
                   (updateErr, updateResult) => {
                     if (updateErr) throw updateErr;
-              
+
                     res.status(200).json({
                       id: insertResult.insertId,
                       campaign_id: campaignId,
@@ -196,62 +197,74 @@ couponsUpdateRouter.post("/coupons", (req, res) => {
                   }
                 );
               });
-            });
-          });
-        });
-      });
+            }
+          );
+        }
+      );
     });
+  });
+});
 
-couponsUpdateRouter.post('/consume', (req, res) => {
+couponsUpdateRouter.post("/consume", (req, res) => {
   req.getConnection((err, connection) => {
     const { code, user_id } = req.body;
     const getCouponQuery = `
       SELECT * FROM coupons WHERE code = '${code}' AND used = 0
     `;
-    console.log(getCouponQuery)
+    console.log(getCouponQuery);
     connection.query(getCouponQuery, (getCouponErr, getCouponResult) => {
       if (getCouponErr) throw getCouponErr;
 
       // If the coupon does not exist or has already been used, return an error
       if (!getCouponResult.length) {
-        return res.status(404).json({ message: 'Coupon not found or already used' });
+        return res
+          .status(404)
+          .json({ message: "Coupon not found or already used" });
       }
 
       // If the coupon exists and has not been used, check if it has not expired
       const coupon = getCouponResult[0];
       const now = new Date();
       if (coupon.expiration_date < now) {
-        return res.status(404).json({ message: 'Coupon has expired' });
+        return res.status(404).json({ message: "Coupon has expired" });
       }
 
       // Update the coupon and decrement the campaign and user coupon limits
       const updateCouponQuery = `
         UPDATE coupons SET used = 1, user_id = ${user_id} WHERE id = ${coupon.id}
       `;
-      console.log(updateCouponQuery)
-      connection.query(updateCouponQuery, (updateCouponErr, updateCouponResult) => {
-        if (updateCouponErr) throw updateCouponErr;
+      console.log(updateCouponQuery);
+      connection.query(
+        updateCouponQuery,
+        (updateCouponErr, updateCouponResult) => {
+          if (updateCouponErr) throw updateCouponErr;
 
-        const updateCampaignQuery = `
+          const updateCampaignQuery = `
           UPDATE campaigns SET max_coupons_per_campaign = max_coupons_per_campaign - 1, 
           max_coupons_per_user_per_campaign = max_coupons_per_user_per_campaign - 1 
           WHERE id = ${coupon.campaign_id} AND max_coupons_per_campaign > 0 
             AND max_coupons_per_user_per_campaign > 0
         `;
-        console.log(updateCampaignQuery)
-        connection.query(updateCampaignQuery, (updateCampaignErr, updateCampaignResult) => {
-          if (updateCampaignErr) throw updateCampaignErr;
+          console.log(updateCampaignQuery);
+          connection.query(
+            updateCampaignQuery,
+            (updateCampaignErr, updateCampaignResult) => {
+              if (updateCampaignErr) throw updateCampaignErr;
 
-          // Return success message
-          return res.status(200).json({ message: 'Coupon successfully consumed' });
-        });
-      });
+              // Return success message
+              return res
+                .status(200)
+                .json({ message: "Coupon successfully consumed" });
+            }
+          );
+        }
+      );
     });
   });
 });
 
 // API endpoint to get all unused coupons for a given user ID
-couponsUpdateRouter.get('/coupons/:user_id', (req, res) => {
+couponsUpdateRouter.get("/coupons/:user_id", (req, res) => {
   req.getConnection((err, connection) => {
     const { user_id } = req.params;
     const getCouponsQuery = `
@@ -263,19 +276,20 @@ couponsUpdateRouter.get('/coupons/:user_id', (req, res) => {
         AND ca.start_date <= NOW()
         AND ca.end_date >= NOW();
     `;
-    console.log(getCouponsQuery)
+    console.log(getCouponsQuery);
     connection.query(getCouponsQuery, (err, results) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ error: 'An error occurred while fetching coupons' });
-        }
-        return res.json({data:results});
+      if (err) {
+        console.error(err);
+        return res
+          .status(500)
+          .json({ error: "An error occurred while fetching coupons" });
+      }
+      return res.json({ data: results });
     });
   });
-  
 });
 
-couponsUpdateRouter.get('/useCoupons/:id', (req, res) => {
+couponsUpdateRouter.get("/useCoupons/:id", (req, res) => {
   const { id } = req.params;
 
   req.getConnection((err, connection) => {
@@ -284,69 +298,80 @@ couponsUpdateRouter.get('/useCoupons/:id', (req, res) => {
     const getCouponQuery = `
     SELECT * FROM coupons WHERE creator_user_id = ${id} ORDER BY created_at DESC LIMIT 1
     `;
-    console.log(getCouponQuery)
+    console.log(getCouponQuery);
     connection.query(getCouponQuery, async (getCouponErr, getCouponResult) => {
       if (getCouponErr) throw getCouponErr;
       // If no coupons were found for the user, return an empty response
-      console.log(getCouponResult)
+      console.log(getCouponResult);
       if (!getCouponResult.length) {
         return res.status(200).json([]);
       }
 
-      const userIds = getCouponResult.map(coupon => coupon.user_id);
-      const campaignIds = getCouponResult.map(coupon => coupon.campaign_id);
-      const creatorIds = getCouponResult.map(coupon => coupon.creator_user_id);
-
-      // Get user and creator data from Firebase
-      const getFirebaseData = async (userIds, creatorIds) => {
-        try {
-          const db = admin.firestore();
-          const usersRef = db.collection('client');
-          const creatorsRef = db.collection('client');
-          const usersSnapshot = await usersRef.where('id_cliente', 'in', userIds).get();
-          const creatorsSnapshot = await creatorsRef.where('id_cliente', 'in', creatorIds).get();
-          const users = {};
-          usersSnapshot.forEach(doc => {
-            users[doc.data().id_cliente] = doc.data();
-          });
-          const creators = {};
-          creatorsSnapshot.forEach(doc => {
-            creators[doc.data().id_cliente] = doc.data();
-          });
-          return { users, creators };
-        } catch (error) {
-          console.error(error);
-          return null;
-        }
-      };
-
-      // Wait for user and creator data to be retrieved, then construct response
-      const { users, creators } = await getFirebaseData(userIds, creatorIds);
-      const campaignData = await getCampaignData(connection, campaignIds);
-
-      const responseData = getCouponResult.map((coupon, index) => {
-        return {
-          coupon_id: coupon.id,
-          discount: coupon.discount,
-          creator: creators[coupon.creator_user_id] ? creators[coupon.creator_user_id].nombres : null,
-          user: users[coupon.user_id].nombres,
-          campaign: campaignData.find(campaign => campaign.id === coupon.campaign_id)
+      const userIds = getCouponResult.map((coupon) => coupon.user_id);
+      const campaignIds = getCouponResult.map((coupon) => coupon.campaign_id);
+      const creatorIds = getCouponResult.map(
+        (coupon) => coupon.creator_user_id
+      );
+      if (userIds != null && campaignIds != null && creatorIds != null) {
+        const getFirebaseData = async (userIds, creatorIds) => {
+          try {
+            const db = admin.firestore();
+            const usersRef = db.collection("client");
+            const creatorsRef = db.collection("client");
+            const usersSnapshot = await usersRef
+              .where("id_cliente", "in", userIds)
+              .get();
+            const creatorsSnapshot = await creatorsRef
+              .where("id_cliente", "in", creatorIds)
+              .get();
+            const users = {};
+            usersSnapshot.forEach((doc) => {
+              users[doc.data().id_cliente] = doc.data();
+            });
+            const creators = {};
+            creatorsSnapshot.forEach((doc) => {
+              creators[doc.data().id_cliente] = doc.data();
+            });
+            return { users, creators };
+          } catch (error) {
+            console.error(error);
+            return null;
+          }
         };
-      });
 
-      return res.status(200).json(responseData);
+        // Wait for user and creator data to be retrieved, then construct response
+        const { users, creators } = await getFirebaseData(userIds, creatorIds);
+        const campaignData = await getCampaignData(connection, campaignIds);
+
+        const responseData = getCouponResult.map((coupon, index) => {
+          return {
+            coupon_id: coupon.id,
+            discount: coupon.discount,
+            creator: creators[coupon.creator_user_id]
+              ? creators[coupon.creator_user_id].nombres
+              : null,
+            user: users[coupon.user_id].nombres,
+            campaign: campaignData.find(
+              (campaign) => campaign.id === coupon.campaign_id
+            ),
+          };
+        });
+
+        return res.status(200).json(responseData);
+      } else {
+        return res.status(404).json({ message: "Coupon no usado todavia" });
+      }
+      // Get user and creator data from Firebase
     });
   });
 });
 
-
-
 async function getCampaignData(connection, campaignIds) {
   return new Promise((resolve, reject) => {
     const getCampaignQuery = `
-      SELECT * FROM campaigns WHERE id IN (${campaignIds.join(',')})
+      SELECT * FROM campaigns WHERE id IN (${campaignIds.join(",")})
     `;
-    console.log(getCampaignQuery)
+    console.log(getCampaignQuery);
     connection.query(getCampaignQuery, (getCampaignErr, getCampaignResult) => {
       if (getCampaignErr) {
         reject(getCampaignErr);
