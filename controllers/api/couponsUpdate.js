@@ -312,7 +312,8 @@ couponsUpdateRouter.get("/useCoupons/:id", (req, res) => {
       const creatorIds = getCouponResult.map(
         (coupon) => coupon.creator_user_id
       );
-      if (userIds != null && campaignIds != null && creatorIds != null) {
+      console.log(userIds, creatorIds, campaignIds);
+      if (!userIds && !campaignIds && !creatorIds) {
         const getFirebaseData = async (userIds, creatorIds) => {
           try {
             const db = admin.firestore();
