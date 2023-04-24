@@ -252,9 +252,20 @@ couponsUpdateRouter.post("/consume", (req, res) => {
               if (updateCampaignErr) throw updateCampaignErr;
 
               // Return success message
-              return res
-                .status(200)
-                .json({ message: "Coupon successfully consumed" });
+
+              const getCouponQuery = `
+              SELECT coupons.id,coupons.code, campaigns.discount FROM coupons INNER JOIN campaigns ON coupons.campaign_id = campaigns.id WHERE code = '${code}'
+            `;
+              console.log(getCouponQuery);
+              connection.query(
+                getCouponQuery,
+                (getErrorResponse, getResultResponse) => {
+                  console.log(getResultResponse[0]);
+                  return res
+                    .status(200)
+                    .json({ message: "Coupon successfully consumed", data : getResultResponse[0] });
+                }
+              );
             }
           );
         }
