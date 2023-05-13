@@ -58,6 +58,22 @@ couponsUpdateRouter.post("/campaigns", (req, res) => {
   });
 });
 
+couponsUpdateRouter.get("/getAllCampaigns", (req, res) => {
+  req.getConnection((err, connection) => {
+    // Insertar la nueva campaña en la base de datos
+    connection.query("SELECT * FROM campaigns", (err, result) => {
+      if (err) {
+        console.error("Error al insertar la nueva campaña: " + err);
+        res.status(500).send("ERROR AL LISTAR LAS CAMPAÑAS");
+        return;
+      }
+
+      console.log("LISTAR LAS CAMPAÑAS con éxito en la base de datos");
+      res.status(200).json(result);
+    });
+  });
+});
+
 function generateCouponCode(campaignName) {
   const maxLength = 6; // Maximum characters allowed for campaign name
   const prefix = campaignName.slice(0, maxLength).toUpperCase();
@@ -263,7 +279,10 @@ couponsUpdateRouter.post("/consume", (req, res) => {
                   console.log(getResultResponse[0]);
                   return res
                     .status(200)
-                    .json({ message: "Coupon successfully consumed", data : getResultResponse[0] });
+                    .json({
+                      message: "Coupon successfully consumed",
+                      data: getResultResponse[0],
+                    });
                 }
               );
             }
