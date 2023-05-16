@@ -221,6 +221,41 @@ couponsUpdateRouter.post("/coupons", (req, res) => {
   });
 });
 
+function incrementUserPoints(connection, userId) {
+  // Consulta para verificar si existe un registro para el user_id proporcionado
+  const selectQuery = 'SELECT * FROM awards_points WHERE user_id = ?';
+  
+  connection.query(selectQuery, [userId], (err, results) => {
+    if (err) {
+      console.error('Error al consultar la base de datos:', err);
+      return;
+    }
+    
+    if (results.length === 0) {
+      // No existe un registro, inserta uno nuevo con user_id y points = 1
+      const insertQuery = 'INSERT INTO awards_points (user_id, points) VALUES (?, 1)';
+      connection.query(insertQuery, [userId], (err, insertResult) => {
+        if (err) {
+          console.error('Error al insertar el registro:', err);
+        } else {
+          console.log('Registro insertado correctamente');
+        }
+      });
+    } else {
+      // Existe un registro, actualiza los puntos incrementando su valor en 1
+      const currentPoints = results[0].points;
+      const updateQuery = 'UPDATE awards_points SET points = ? WHERE user_id = ?';
+      connection.query(updateQuery, [currentPoints + 1, userId], (err, updateResult) => {
+        if (err) {
+          console.error('Error al actualizar los puntos:', err);
+        } else {
+          console.log('Puntos actualizados correctamente');
+        }
+      });
+    }
+  });
+}
+
 couponsUpdateRouter.post("/consume", (req, res) => {
   req.getConnection((err, connection) => {
     const { code, user_id } = req.body;
@@ -277,6 +312,7 @@ couponsUpdateRouter.post("/consume", (req, res) => {
                 getCouponQuery,
                 (getErrorResponse, getResultResponse) => {
                   console.log(getResultResponse[0]);
+                  incrementUserPoints(connection,user_id);
                   return res
                     .status(200)
                     .json({
@@ -395,6 +431,29 @@ couponsUpdateRouter.get("/useCoupons/:id", (req, res) => {
       // Get user and creator data from Firebase
     });
   });
+});
+
+couponsUpdateRouter.get('/puntos/:user_id', (req, res) => {
+  req.getConnection((err, connection) => {
+    const userId = req.params.user_id;
+
+    // Consulta los puntos del usuario según su user_id
+    const selectQuery = 'SELECT points FROM awards_points WHERE user_id = ?';
+    connection.query(selectQuery, [userId], (err, results) => {
+      if (err) {
+        console.error('Error al consultar la base de datos:', err);
+        res.status(500).json({ error: 'Error al consultar los puntos del usuario' });
+        return;
+      }
+  
+      if (results.length === 0) {
+        res.json({ user_id: userId, points: 0 });
+      } else {
+        res.json({ user_id: userId, points: results[0].points });
+      }
+    });
+  });
+
 });
 
 async function getCampaignData(connection, campaignIds) {
