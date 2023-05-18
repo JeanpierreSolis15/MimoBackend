@@ -112,7 +112,7 @@ bannerRouter.get("/get-banner-coupon", (req, res) => {
           console.error("Error al actualizar en coupon_anuncio_app: ", error);
           res.sendStatus(500);
         } else {
-          res.json(results[0]);
+          res.status(200).json(results[0]);
           console.log("Valor actualizado con éxito.");
         }
       }
