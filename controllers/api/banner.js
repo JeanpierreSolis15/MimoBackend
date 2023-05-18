@@ -76,6 +76,50 @@ bannerRouter.put("/updateLinks", (req, res) => {
   });
 });
 
+bannerRouter.put("/update-banner-coupon", (req, res) => {
+  req.getConnection((err, connection) => {
+    const { linkimage } =
+      req.body;
+
+    // Actualizar el primer valor en la tabla 'anuncios_app_slider'
+    connection.query(
+      "UPDATE coupon_anuncio_app SET linkimage = ? WHERE id = 1",
+      [linkimage],
+      (error, results) => {
+        if (error) {
+          console.error("Error al actualizar en coupon_anuncio_app: ", error);
+          res.sendStatus(500);
+        } else {
+          res.sendStatus(200);
+          console.log("Valor actualizado con éxito.");
+        }
+      }
+    );
+  });
+});
+
+bannerRouter.get("/get-banner-coupon", (req, res) => {
+  req.getConnection((err, connection) => {
+    const { linkimage } =
+      req.body;
+
+    // Actualizar el primer valor en la tabla 'anuncios_app_slider'
+    connection.query(
+      "SELECT * FROM coupon_anuncio_app WHERE id = 1",
+      [linkimage],
+      (error, results) => {
+        if (error) {
+          console.error("Error al actualizar en coupon_anuncio_app: ", error);
+          res.sendStatus(500);
+        } else {
+          res.json(results[0]);
+          console.log("Valor actualizado con éxito.");
+        }
+      }
+    );
+  });
+});
+
 bannerRouter.post('/add-image-slider', (req, res) => {
   req.getConnection((err, db) => {
     const { linkimage } = req.body;
@@ -93,6 +137,7 @@ bannerRouter.post('/add-image-slider', (req, res) => {
   });
 
 });
+
 
 bannerRouter.delete('/delete-image-slider/:id', (req, res) => {
   req.getConnection((err, db) => {
