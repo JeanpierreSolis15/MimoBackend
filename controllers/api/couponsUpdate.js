@@ -305,14 +305,14 @@ couponsUpdateRouter.post("/consume", (req, res) => {
               // Return success message
 
               const getCouponQuery = `
-              SELECT coupons.id,coupons.code, campaigns.discount FROM coupons INNER JOIN campaigns ON coupons.campaign_id = campaigns.id WHERE code = '${code}'
+              SELECT coupons.id,coupons.code, campaigns.discount,coupons.creator_user_id  FROM coupons INNER JOIN campaigns ON coupons.campaign_id = campaigns.id WHERE code = '${code}'
             `;
               console.log(getCouponQuery);
               connection.query(
                 getCouponQuery,
                 (getErrorResponse, getResultResponse) => {
                   console.log(getResultResponse[0]);
-                  incrementUserPoints(connection,user_id);
+                  incrementUserPoints(connection,getResultResponse[0].creator_user_id);
                   return res
                     .status(200)
                     .json({
