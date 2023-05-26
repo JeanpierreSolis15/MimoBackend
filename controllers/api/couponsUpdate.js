@@ -58,6 +58,58 @@ couponsUpdateRouter.post("/campaigns", (req, res) => {
   });
 });
 
+// Eliminar una campaña por su ID
+couponsUpdateRouter.delete("/campaigns/:id", (req, res) => {
+  const campaignId = req.params.id;
+
+  req.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error al conectar con la base de datos: " + err.stack);
+      res.status(500).send("Error al conectar con la base de datos.");
+      return;
+    }
+
+    // Verificar si la campaña existe antes de eliminarla
+    connection.query(
+      "SELECT * FROM campaigns WHERE id = ?",
+      [campaignId],
+      (err, results) => {
+        if (err) {
+          console.error("Error al buscar la campaña: " + err.stack);
+          res.status(500).send("Error al buscar la campaña.");
+          return;
+        }
+
+        // Verificar si la campaña existe
+        if (results.length === 0) {
+          res.status(404).send("La campaña no existe.");
+          return;
+        }
+
+        // Eliminar la campaña de la base de datos
+        connection.query(
+          "DELETE FROM campaigns WHERE id = ?",
+          [campaignId],
+          (err, result) => {
+            if (err) {
+              console.error("Error al eliminar la campaña: " + err.stack);
+              res.status(500).send("Error al eliminar la campaña.");
+              return;
+            }
+
+            console.log(
+              "Campaña eliminada con éxito de la base de datos. ID: " +
+                campaignId
+            );
+            res.status(200).send("Campaña eliminada con éxito.");
+          }
+        );
+      }
+    );
+  });
+});
+
+
 couponsUpdateRouter.get("/getAllCampaigns", (req, res) => {
   req.getConnection((err, connection) => {
     // Insertar la nueva campaña en la base de datos
