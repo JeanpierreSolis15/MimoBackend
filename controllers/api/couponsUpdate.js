@@ -98,7 +98,7 @@ couponsUpdateRouter.post("/coupons", (req, res) => {
       if (campaignErr) throw campaignErr;
 
       if (campaignResult.length === 0) {
-        res.status(404).send("No active campaigns found");
+        res.status(404).send("No se encontraron campañas activas");
         return;
       }
 
@@ -135,7 +135,7 @@ couponsUpdateRouter.post("/coupons", (req, res) => {
             res
               .status(400)
               .send(
-                "User has reached the maximum number of coupons for this campaign"
+                "El usuario ha alcanzado el número máximo de cupones para esta campaña"
               );
             return;
           }
@@ -158,7 +158,7 @@ couponsUpdateRouter.post("/coupons", (req, res) => {
               if (campaignCouponCount >= maxCouponsPerCampaign) {
                 res
                   .status(400)
-                  .send("Campaign has reached the maximum number of coupons");
+                  .send("La campaña ha alcanzado el número máximo de cupones");
                 return;
               }
 
@@ -169,7 +169,7 @@ couponsUpdateRouter.post("/coupons", (req, res) => {
                 res
                   .status(400)
                   .send(
-                    "Campaign has reached the maximum number of total coupons"
+                    "La campaña ha alcanzado el número máximo de cupones totales"
                   );
                 return;
               }
@@ -270,14 +270,14 @@ couponsUpdateRouter.post("/consume", (req, res) => {
       if (!getCouponResult.length) {
         return res
           .status(404)
-          .json({ message: "Coupon not found or already used" });
+          .json({ message: "Cupón no encontrado o ya utilizado" });
       }
 
       // If the coupon exists and has not been used, check if it has not expired
       const coupon = getCouponResult[0];
       const now = new Date();
       if (coupon.expiration_date < now) {
-        return res.status(404).json({ message: "Coupon has expired" });
+        return res.status(404).json({ message: "El cupón ha caducado" });
       }
 
       // Update the coupon and decrement the campaign and user coupon limits
@@ -316,7 +316,7 @@ couponsUpdateRouter.post("/consume", (req, res) => {
                   return res
                     .status(200)
                     .json({
-                      message: "Coupon successfully consumed",
+                      message: "Cupón consumido con éxito",
                       data: getResultResponse[0],
                     });
                 }
@@ -348,7 +348,7 @@ couponsUpdateRouter.get("/coupons/:user_id", (req, res) => {
         console.error(err);
         return res
           .status(500)
-          .json({ error: "An error occurred while fetching coupons" });
+          .json({ error: "Ocurrió un error al obtener cupones" });
       }
       return res.json({ data: results });
     });
