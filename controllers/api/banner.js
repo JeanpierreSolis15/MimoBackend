@@ -41,40 +41,64 @@ bannerRouter.get("/", (req, res) => {
 
 bannerRouter.put("/updateLinks", (req, res) => {
   req.getConnection((err, connection) => {
-    const { linkimage_popup_app,description_popup_app, linkimage_banner_principal_app } =
-      req.body;
+    const {
+      linkimage_popup_app,
+      description_popup_app,
+      linkimage_banner_principal_app
+    } = req.body;
 
-    // Actualizar el primer valor en la tabla 'anuncios_app_slider'
-    connection.query(
-      "UPDATE popup_anuncio_app SET linkimage = ?, description = ? WHERE id = 1",
-      [linkimage_popup_app,description_popup_app],
-      (error, results) => {
-        if (error) {
-          console.error("Error al actualizar en anuncios_app_slider: ", error);
-          res.sendStatus(500);
-        } else {
-          // Actualizar el primer valor en la tabla 'banner_principal_app'
-          connection.query(
-            "UPDATE banner_principal_app SET linkimage = ? WHERE id = 1",
-            [linkimage_banner_principal_app],
-            (error, results) => {
-              if (error) {
-                console.error(
-                  "Error al actualizar en banner_principal_app: ",
-                  error
-                );
-                res.sendStatus(500);
-              } else {
-                console.log("Valores actualizados con éxito en ambas tablas.");
-                res.sendStatus(200);
-              }
-            }
-          );
+    if (linkimage_popup_app) {
+      // Actualizar el valor de 'linkimage' en la tabla 'popup_anuncio_app'
+      connection.query(
+        "UPDATE popup_anuncio_app SET linkimage = ? WHERE id = 1",
+        [linkimage_popup_app],
+        (error, results) => {
+          if (error) {
+            console.error("Error al actualizar linkimage en popup_anuncio_app: ", error);
+            res.sendStatus(500);
+          } else {
+            console.log("Valor de linkimage actualizado con éxito en popup_anuncio_app.");
+          }
         }
-      }
-    );
+      );
+    }
+
+    if (description_popup_app) {
+      // Actualizar el valor de 'description' en la tabla 'popup_anuncio_app'
+      connection.query(
+        "UPDATE popup_anuncio_app SET description = ? WHERE id = 1",
+        [description_popup_app],
+        (error, results) => {
+          if (error) {
+            console.error("Error al actualizar description en popup_anuncio_app: ", error);
+            res.sendStatus(500);
+          } else {
+            console.log("Valor de description actualizado con éxito en popup_anuncio_app.");
+          }
+        }
+      );
+    }
+
+    if (linkimage_banner_principal_app) {
+      // Actualizar el valor de 'linkimage' en la tabla 'banner_principal_app'
+      connection.query(
+        "UPDATE banner_principal_app SET linkimage = ? WHERE id = 1",
+        [linkimage_banner_principal_app],
+        (error, results) => {
+          if (error) {
+            console.error("Error al actualizar linkimage en banner_principal_app: ", error);
+            res.sendStatus(500);
+          } else {
+            console.log("Valor de linkimage actualizado con éxito en banner_principal_app.");
+          }
+        }
+      );
+    }
+
+    res.sendStatus(200);
   });
 });
+
 
 bannerRouter.put("/update-banner-coupon", (req, res) => {
   req.getConnection((err, connection) => {
