@@ -22,11 +22,12 @@ couponsUpdateRouter.post("/campaigns", (req, res) => {
       max_coupons_per_user_per_campaign,
       discount,
       days_to_expire,
+      max_uses_per_coupon
     } = req.body;
 
     // Insertar la nueva campaña en la base de datos
     connection.query(
-      "INSERT INTO campaigns (name, start_date, end_date, max_coupons_per_campaign, max_coupons_per_user_per_campaign, discount, days_to_expire) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO campaigns (name, start_date, end_date, max_coupons_per_campaign, max_coupons_per_user_per_campaign, discount, days_to_expire, max_uses_per_coupon) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
       [
         name,
         start_date,
@@ -35,6 +36,7 @@ couponsUpdateRouter.post("/campaigns", (req, res) => {
         max_coupons_per_user_per_campaign,
         discount,
         days_to_expire,
+        max_uses_per_coupon
       ],
       (err, result) => {
         if (err) {
@@ -308,11 +310,84 @@ function incrementUserPoints(connection, userId) {
   });
 }
 
+//API DE CONSUMIR CUPON ANTES DE MOFICICACION DE QUE EL USUARIO PUEDA USAR VARIAS VECES EL CUPON 
+// couponsUpdateRouter.post("/consume", (req, res) => {
+//   req.getConnection((err, connection) => {
+//     const { code, user_id } = req.body;
+//     const getCouponQuery = `
+//       SELECT * FROM coupons WHERE code = '${code}' AND used = 0
+//     `;
+//     console.log(getCouponQuery);
+//     connection.query(getCouponQuery, (getCouponErr, getCouponResult) => {
+//       if (getCouponErr) throw getCouponErr;
+
+//       // If the coupon does not exist or has already been used, return an error
+//       if (!getCouponResult.length) {
+//         return res
+//           .status(404)
+//           .json({ message: "Cupón no encontrado o ya utilizado" });
+//       }
+
+//       // If the coupon exists and has not been used, check if it has not expired
+//       const coupon = getCouponResult[0];
+//       const now = new Date();
+//       if (coupon.expiration_date < now) {
+//         return res.status(404).json({ message: "El cupón ha caducado" });
+//       }
+
+//       // Update the coupon and decrement the campaign and user coupon limits
+//       const updateCouponQuery = `
+//         UPDATE coupons SET used = 1, user_id = ${user_id} WHERE id = ${coupon.id}
+//       `;
+//       console.log(updateCouponQuery);
+//       connection.query(
+//         updateCouponQuery,
+//         (updateCouponErr, updateCouponResult) => {
+//           if (updateCouponErr) throw updateCouponErr;
+
+//           const updateCampaignQuery = `
+//           UPDATE campaigns SET max_coupons_per_campaign = max_coupons_per_campaign - 1, 
+//           max_coupons_per_user_per_campaign = max_coupons_per_user_per_campaign - 1 
+//           WHERE id = ${coupon.campaign_id} AND max_coupons_per_campaign > 0 
+//             AND max_coupons_per_user_per_campaign > 0
+//         `;
+//           console.log(updateCampaignQuery);
+//           connection.query(
+//             updateCampaignQuery,
+//             (updateCampaignErr, updateCampaignResult) => {
+//               if (updateCampaignErr) throw updateCampaignErr;
+
+//               // Return success message
+
+//               const getCouponQuery = `
+//               SELECT coupons.id,coupons.code, campaigns.discount,coupons.creator_user_id  FROM coupons INNER JOIN campaigns ON coupons.campaign_id = campaigns.id WHERE code = '${code}'
+//             `;
+//               console.log(getCouponQuery);
+//               connection.query(
+//                 getCouponQuery,
+//                 (getErrorResponse, getResultResponse) => {
+//                   console.log(getResultResponse[0]);
+//                   incrementUserPoints(connection,getResultResponse[0].creator_user_id);
+//                   return res
+//                     .status(200)
+//                     .json({
+//                       message: "Cupón consumido con éxito",
+//                       data: getResultResponse[0],
+//                     });
+//                 }
+//               );
+//             }
+//           );
+//         }
+//       );
+//     });
+//   });
+// });
 couponsUpdateRouter.post("/consume", (req, res) => {
   req.getConnection((err, connection) => {
     const { code, user_id } = req.body;
     const getCouponQuery = `
-      SELECT * FROM coupons WHERE code = '${code}' AND used = 0
+      SELECT * FROM coupons WHERE code = '${code}'
     `;
     console.log(getCouponQuery);
     connection.query(getCouponQuery, (getCouponErr, getCouponResult) => {
@@ -331,52 +406,69 @@ couponsUpdateRouter.post("/consume", (req, res) => {
       if (coupon.expiration_date < now) {
         return res.status(404).json({ message: "El cupón ha caducado" });
       }
-
-      // Update the coupon and decrement the campaign and user coupon limits
-      const updateCouponQuery = `
-        UPDATE coupons SET used = 1, user_id = ${user_id} WHERE id = ${coupon.id}
+      
+      // Get the campaign details to check the maximum uses per coupon
+      const getCampaignQuery = `
+        SELECT max_uses_per_coupon FROM campaigns WHERE id = ${coupon.campaign_id}
       `;
-      console.log(updateCouponQuery);
-      connection.query(
-        updateCouponQuery,
-        (updateCouponErr, updateCouponResult) => {
-          if (updateCouponErr) throw updateCouponErr;
+      connection.query(getCampaignQuery, (getCampaignErr, getCampaignResult) => {
+        if (getCampaignErr) throw getCampaignErr;
 
-          const updateCampaignQuery = `
-          UPDATE campaigns SET max_coupons_per_campaign = max_coupons_per_campaign - 1, 
-          max_coupons_per_user_per_campaign = max_coupons_per_user_per_campaign - 1 
-          WHERE id = ${coupon.campaign_id} AND max_coupons_per_campaign > 0 
-            AND max_coupons_per_user_per_campaign > 0
-        `;
-          console.log(updateCampaignQuery);
-          connection.query(
-            updateCampaignQuery,
-            (updateCampaignErr, updateCampaignResult) => {
-              if (updateCampaignErr) throw updateCampaignErr;
-
-              // Return success message
-
-              const getCouponQuery = `
-              SELECT coupons.id,coupons.code, campaigns.discount,coupons.creator_user_id  FROM coupons INNER JOIN campaigns ON coupons.campaign_id = campaigns.id WHERE code = '${code}'
-            `;
-              console.log(getCouponQuery);
-              connection.query(
-                getCouponQuery,
-                (getErrorResponse, getResultResponse) => {
-                  console.log(getResultResponse[0]);
-                  incrementUserPoints(connection,getResultResponse[0].creator_user_id);
-                  return res
-                    .status(200)
-                    .json({
-                      message: "Cupón consumido con éxito",
-                      data: getResultResponse[0],
-                    });
-                }
-              );
-            }
-          );
+        // Check if the coupon has reached the maximum number of uses
+        if (coupon.used_count >= getCampaignResult[0].max_uses_per_coupon) {
+          return res.status(400).json({ message: "El cupón ha alcanzado el máximo número de usos" });
         }
-      );
+
+        // Update the coupon and decrement the campaign and user coupon limits
+        const updateCouponQuery = `
+          UPDATE coupons SET used = 1, user_id = ${user_id}, used_count = used_count + 1 WHERE id = ${coupon.id}
+        `;
+        console.log(updateCouponQuery);
+        connection.query(
+          updateCouponQuery,
+          (updateCouponErr, updateCouponResult) => {
+            if (updateCouponErr) throw updateCouponErr;
+
+            const updateCampaignQuery = `
+              UPDATE campaigns 
+              SET max_coupons_per_campaign = max_coupons_per_campaign - 1, 
+                  max_coupons_per_user_per_campaign = max_coupons_per_user_per_campaign - 1 
+              WHERE id = ${coupon.campaign_id} 
+                AND max_coupons_per_campaign > 0 
+                AND max_coupons_per_user_per_campaign > 0
+            `;
+            console.log(updateCampaignQuery);
+            connection.query(
+              updateCampaignQuery,
+              (updateCampaignErr, updateCampaignResult) => {
+                if (updateCampaignErr) throw updateCampaignErr;
+
+                // Return success message
+                const getCouponQuery = `
+                  SELECT coupons.id, coupons.code, campaigns.discount, coupons.creator_user_id
+                  FROM coupons
+                  INNER JOIN campaigns ON coupons.campaign_id = campaigns.id
+                  WHERE code = '${code}'
+                `;
+                console.log(getCouponQuery);
+                connection.query(
+                  getCouponQuery,
+                  (getErrorResponse, getResultResponse) => {
+                    console.log(getResultResponse[0]);
+                    incrementUserPoints(connection, getResultResponse[0].creator_user_id);
+                    return res
+                      .status(200)
+                      .json({
+                        message: "Cupón consumido con éxito",
+                        data: getResultResponse[0],
+                      });
+                  }
+                );
+              }
+            );
+          }
+        );
+      });
     });
   });
 });
