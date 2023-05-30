@@ -287,7 +287,7 @@ function incrementUserPoints(connection, userId) {
     
     if (results.length === 0) {
       // No existe un registro, inserta uno nuevo con user_id y points = 1
-      const insertQuery = 'INSERT INTO awards_points (user_id, points) VALUES (?, 1)';
+      const insertQuery = 'INSERT INTO awards_points (user_id, points,guest_users) VALUES (?, 1, 1)';
       connection.query(insertQuery, [userId], (err, insertResult) => {
         if (err) {
           console.error('Error al insertar el registro:', err);
@@ -298,8 +298,9 @@ function incrementUserPoints(connection, userId) {
     } else {
       // Existe un registro, actualiza los puntos incrementando su valor en 1
       const currentPoints = results[0].points;
-      const updateQuery = 'UPDATE awards_points SET points = ? WHERE user_id = ?';
-      connection.query(updateQuery, [currentPoints + 1, userId], (err, updateResult) => {
+      const currentinvites = results[0].guest_users;
+      const updateQuery = 'UPDATE awards_points SET points = ?, guest_users = ? WHERE user_id = ?';
+      connection.query(updateQuery, [currentPoints + 1, currentinvites + 1, userId], (err, updateResult) => {
         if (err) {
           console.error('Error al actualizar los puntos:', err);
         } else {
