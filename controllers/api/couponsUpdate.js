@@ -583,7 +583,7 @@ couponsUpdateRouter.get('/puntos/:user_id', (req, res) => {
     const userId = req.params.user_id;
 
     // Consulta los puntos del usuario según su user_id
-    const selectQuery = 'SELECT points FROM awards_points WHERE user_id = ?';
+    const selectQuery = 'SELECT points,guest_users FROM awards_points WHERE user_id = ?';
     connection.query(selectQuery, [userId], (err, results) => {
       if (err) {
         console.error('Error al consultar la base de datos:', err);
@@ -592,9 +592,9 @@ couponsUpdateRouter.get('/puntos/:user_id', (req, res) => {
       }
   
       if (results.length === 0) {
-        res.json({ user_id: userId, points: 0 });
+        res.json({ user_id: userId, points: 0, guest_users:0 });
       } else {
-        res.json({ user_id: userId, points: results[0].points });
+        res.json({ user_id: userId, points: results[0].points, guest_users: results[0].guest_users });
       }
     });
   });
