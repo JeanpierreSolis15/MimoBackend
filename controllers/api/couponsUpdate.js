@@ -506,7 +506,7 @@ couponsUpdateRouter.get("/useCoupons/:id", (req, res) => {
     if (err) throw err;
 
     const getCouponQuery = `
-    SELECT * FROM coupons WHERE creator_user_id = ${id} ORDER BY created_at DESC LIMIT 1
+    SELECT * FROM coupons WHERE creator_user_id = ${id} AND used = '1' ORDER BY created_at DESC LIMIT 1
     `;
     console.log(getCouponQuery);
     connection.query(getCouponQuery, async (getCouponErr, getCouponResult) => {
@@ -523,7 +523,7 @@ couponsUpdateRouter.get("/useCoupons/:id", (req, res) => {
         (coupon) => coupon.creator_user_id
       );
       console.log(userIds, creatorIds, campaignIds);
-      if (!userIds && !campaignIds && !creatorIds) {
+      if (userIds && campaignIds && creatorIds) {
         const getFirebaseData = async (userIds, creatorIds) => {
           try {
             const db = admin.firestore();
